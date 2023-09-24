@@ -25,7 +25,7 @@ wss.on('connection', (ws) => {
                 client.send('This is a message sent every 10 seconds.');
             }
         });
-    }, 10000);
+    }, 100000);
     
     // Listen for messages from the client
     ws.on('message', (message) => {
