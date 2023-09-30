@@ -22,7 +22,7 @@ wss.on('connection', (ws) => {
     setInterval(() => {
         wss.clients.forEach(client => {
             if (client.readyState === WebSocket.OPEN) {
-                client.send('This is a message sent every 10 seconds.');
+                client.send('This is a message sent every 100 seconds.');
             }
         });
     }, 100000);
@@ -31,6 +31,12 @@ wss.on('connection', (ws) => {
     ws.on('message', (message) => {
         console.log(`Received message => ${message}`);
     });
+    ws.on('records', (message) => {
+        console.log('in the message channel '+message);
+    })
+    ws.on('performance', (message) => {
+        console.log('in the performance channel '+message);
+    })
 });
 
 server.listen(8888, function() {
