@@ -30,13 +30,11 @@ wss.on('connection', (ws) => {
     // Listen for messages from the client
     ws.on('message', (message) => {
         console.log(`Received message => ${message}`);
+        if(message.channel === 'records'){
+            console.log('in the records channel '+message);
+        }
     });
-    ws.on('records', (message) => {
-        console.log('in the message channel '+message);
-    })
-    ws.on('performance', (message) => {
-        console.log('in the performance channel '+message);
-    })
+    
 });
 
 server.listen(8888, function() {
