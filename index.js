@@ -14,29 +14,24 @@ const wss = new WebSocket.Server({ server });
 
 wss.on('connection', (ws) => {
     console.log('Client connected');
-
     // Send a welcome message to the client
     ws.send('Welcome to the WebSocket server!');
-
-    // Example: Emit a message to all clients every 10 seconds
-    setInterval(() => {
-        wss.clients.forEach(client => {
-            if (client.readyState === WebSocket.OPEN) {
-                client.send('This is a message sent every 100 seconds.');
-            }
-        });
-    }, 100000);
-    
     // Listen for messages from the client
     ws.on('message', (message) => {
-        console.log(`Received message => ${message}`);
-        let record = JSON.parse(message);
+        console.log('Received message');
+        let record;
+        try{
+            record = JSON.parse(message);
+        }catch(error){
+            console.log('error parsing');
+            return;
+        }      
         if(record.channel === 'records'){
             console.log('in the records channel '+record);
-            channelMessage(wss,'records',record);
+            channelMessage('records',record);
         }else if(record.channel === 'performance'){
             console.log('in the performance channel');
-            channelMessage(wss,'performance',record);
+            channelMessage('performance',record);
         }else{
             console.log('unknown channel :(');
         }
@@ -44,9 +39,13 @@ wss.on('connection', (ws) => {
     
 });
 
-function channelMessage(client, channel, data){
+function channelMessage(channel, data){
     const message = JSON.stringify({channel, data});
-    client.send(message);
+    wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(message);
+        }
+    });
 }
 
 server.listen(8888, function() {
