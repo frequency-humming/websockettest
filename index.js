@@ -30,8 +30,9 @@ wss.on('connection', (ws) => {
     // Listen for messages from the client
     ws.on('message', (message) => {
         console.log(`Received message => ${message}`);
-        if(message.channel === 'records'){
-            console.log('in the records channel '+message);
+        let record = JSON.parse(message);
+        if(record.channel === 'records'){
+            console.log('in the records channel '+record);
         }
     });
     
