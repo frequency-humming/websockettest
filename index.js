@@ -33,10 +33,21 @@ wss.on('connection', (ws) => {
         let record = JSON.parse(message);
         if(record.channel === 'records'){
             console.log('in the records channel '+record);
+            channelMessage(wss,'records',record);
+        }else if(record.channel === 'performance'){
+            console.log('in the performance channel');
+            channelMessage(wss,'performance',record);
+        }else{
+            console.log('unknown channel :(');
         }
     });
     
 });
+
+function channelMessage(client, channel, data){
+    const message = JSON.stringify({channel, data});
+    client.send(message);
+}
 
 server.listen(8888, function() {
     console.log("listening on port 8888");
