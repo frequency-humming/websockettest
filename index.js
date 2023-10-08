@@ -38,6 +38,7 @@ wss.on('connection', (ws) => {
         }
     });
     ws.on('pong', () => {
+        console.log('on pong');
         ws.isAlive = true;
     });
     ws.on('error', (error) => {
@@ -48,6 +49,7 @@ wss.on('connection', (ws) => {
 
 const intervalId = setInterval(() => {
     wss.clients.forEach((ws) => {
+        console.log('sending ping');
         if (!ws.isAlive) return ws.terminate();
         ws.isAlive = false;
         ws.ping(null, false, true);
