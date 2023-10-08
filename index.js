@@ -13,10 +13,11 @@ const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
 wss.on('connection', (ws) => {
-    console.log('Client connected');
-    // Send a welcome message to the client
+
+    console.log('Client connected'); 
     ws.send('Welcome to the WebSocket server!');
-    // Listen for messages from the client
+    ws.isAlive = true;
+
     ws.on('message', (message) => {
         console.log('Received message');
         let record;
@@ -36,11 +37,22 @@ wss.on('connection', (ws) => {
             console.log('unknown channel :(');
         }
     });
+    ws.on('pong', () => {
+        ws.isAlive = true;
+    });
     ws.on('error', (error) => {
         console.error('WebSocket Error:', error);
     });
     
 });
+
+const intervalId = setInterval(() => {
+    wss.clients.forEach((ws) => {
+        if (!ws.isAlive) return ws.terminate();
+        ws.isAlive = false;
+        ws.ping(null, false, true);
+    });
+}, 30000);
 
 function channelMessage(channel, data,originatingWs){
     console.log(`Number of connected clients: ${wss.clients.size}`);
@@ -51,6 +63,20 @@ function channelMessage(channel, data,originatingWs){
         }
     });
 }
+
+process.on('exit', () => {
+    clearInterval(intervalId);
+});
+
+process.on('SIGINT', () => {
+    clearInterval(intervalId);
+    process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+    clearInterval(intervalId);
+    process.exit(0);
+});
 
 server.listen(8888, function() {
     console.log("listening on port 8888");
