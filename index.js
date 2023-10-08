@@ -28,10 +28,10 @@ wss.on('connection', (ws) => {
         }      
         if(record.channel === 'records'){
             console.log('in the records channel '+record);
-            channelMessage('records',record);
+            channelMessage('records',record,ws);
         }else if(record.channel === 'performance'){
             console.log('in the performance channel');
-            channelMessage('performance',record);
+            channelMessage('performance',record,ws);
         }else{
             console.log('unknown channel :(');
         }
@@ -42,7 +42,7 @@ wss.on('connection', (ws) => {
     
 });
 
-function channelMessage(channel, data){
+function channelMessage(channel, data,originatingWs){
     console.log(`Number of connected clients: ${wss.clients.size}`);
     const message = JSON.stringify({channel, data});
     wss.clients.forEach(client => {
