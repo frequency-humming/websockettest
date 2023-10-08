@@ -36,13 +36,17 @@ wss.on('connection', (ws) => {
             console.log('unknown channel :(');
         }
     });
+    ws.on('error', (error) => {
+        console.error('WebSocket Error:', error);
+    });
     
 });
 
 function channelMessage(channel, data){
+    console.log(`Number of connected clients: ${wss.clients.size}`);
     const message = JSON.stringify({channel, data});
     wss.clients.forEach(client => {
-        if (client.readyState === WebSocket.OPEN) {
+        if (client !== originatingWs && client.readyState === WebSocket.OPEN) {
             client.send(message);
         }
     });
