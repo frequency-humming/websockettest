@@ -54,6 +54,8 @@ const intervalId = setInterval(() => {
         ws.isAlive = false;
         ws.ping(null, false, true);
     });
+    const memoryUsage = process.memoryUsage();
+    console.log('Memory Usage:', memoryUsage);
 }, 30000);
 
 function channelMessage(channel, data,originatingWs){
