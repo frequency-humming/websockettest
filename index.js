@@ -6,6 +6,7 @@ const app = express();
 app.use(cors());
 
 expressWs(app);
+
 const clientsByEndpoint = {
     '/records': [],
     '/performance': []
@@ -15,7 +16,11 @@ app.ws('/records', (ws, req) => {
 
     console.log('Client connected to records');
     const origin = req.headers.origin;
-    console.log(origin);
+    if (!isAllowedOrigin(origin)) {
+        ws.close();
+        console.log(`Connection from disallowed origin: ${origin}`);
+        return;
+    }
     clientsByEndpoint['/records'].push(ws);
     ws.send('Welcome to the records WebSocket');
     
@@ -32,7 +37,11 @@ app.ws('/performance', (ws, req) => {
 
     console.log('Client connected to performance');
     const origin = req.headers.origin;
-    console.log(origin);
+    if (!isAllowedOrigin(origin)) {
+        ws.close();
+        console.log(`Connection from disallowed origin: ${origin}`);
+        return;
+    }
     clientsByEndpoint['/performance'].push(ws);
     ws.send('Welcome to the performance WebSocket');
     ws.on('message', (message) => {
@@ -83,6 +92,12 @@ function channelMessage(endpoint, data, originatingWs) {
             client.send(message);
         }
     });
+}
+
+function isAllowedOrigin(origin) {
+    let env = process.env.Origins;
+    let allowedOrigins = env.split(',');
+    return allowedOrigins.includes(origin);
 }
 
 process.on('exit', () => {
