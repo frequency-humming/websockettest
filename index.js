@@ -1,42 +1,47 @@
 var express = require("express");
-const http = require('http');
-const cors = require('cors'); 
-const fs = require('fs');
-const WebSocket = require('ws');
+const expressWs = require('express-ws');
+const cors = require('cors');
 
 const app = express();
 app.use(cors());
 
-const server = http.createServer(app);
+expressWs(app);
+const clientsByEndpoint = {
+    '/records': [],
+    '/performance': []
+};
 
-// Create a WebSocket server by passing the Express server instance.
-const wss = new WebSocket.Server({ server });
+app.ws('/records', (ws, req) => {
 
-wss.on('connection', (ws) => {
-
-    console.log('Client connected'); 
-    ws.send('Welcome to the WebSocket server!');
-    ws.isAlive = true;
-
+    console.log('Client connected to records channel');
+    clientsByEndpoint['/records'].push(ws);
+    ws.send('Welcome to the records WebSocket channel!');
     ws.on('message', (message) => {
-        console.log('Received message');
-        let record;
-        try{
-            record = JSON.parse(message);
-        }catch(error){
-            console.log('error parsing');
-            return;
-        }      
-        if(record.channel === 'records'){
-            console.log('in the records channel '+record);
-            channelMessage('records',record,ws);
-        }else if(record.channel === 'performance'){
-            console.log('in the performance channel');
-            channelMessage('performance',record,ws);
-        }else{
-            console.log('unknown channel :(');
-        }
+        console.log('Received message in records channel', message);
+        // Broadcast the message to all connected clients on this channel
+        channelMessage('/records', message, ws);
     });
+
+    webSocketListeners(ws, '/records');
+});
+
+app.ws('/performance', (ws, req) => {
+
+    console.log('Client connected to performance channel');
+    clientsByEndpoint['/performance'].push(ws);
+    ws.send('Welcome to the performance WebSocket channel!');
+    ws.on('message', (message) => {
+        console.log('Received message in performance channel', message);
+        // Broadcast the message to all connected clients on this channel
+        channelMessage('/performance', message, ws);
+    });
+
+    webSocketListeners(ws, '/performance');
+});
+
+function webSocketListeners(ws, endpoint) {
+
+    ws.isAlive = true;
     ws.on('pong', () => {
         console.log('on pong');
         ws.isAlive = true;
@@ -44,25 +49,32 @@ wss.on('connection', (ws) => {
     ws.on('error', (error) => {
         console.error('WebSocket Error:', error);
     });
-    
-});
+    ws.on('close', () => {
+        clientsByEndpoint[endpoint] = clientsByEndpoint[endpoint].filter(client => client !== ws);
+    });
+}
 
 const intervalId = setInterval(() => {
-    wss.clients.forEach((ws) => {
-        console.log('sending ping');
-        if (!ws.isAlive) return ws.terminate();
-        ws.isAlive = false;
-        ws.ping(null, false, true);
+    // Check each channel's clients and ping them
+    Object.keys(clientsByEndpoint).forEach(endpoint => {
+        clientsByEndpoint[endpoint].forEach(ws => {
+            console.log(`sending ping to ${endpoint}`);
+            if (!ws.isAlive) return ws.terminate();
+            ws.isAlive = false;
+            ws.ping(null, false, true);
+        });
     });
     const memoryUsage = process.memoryUsage();
     console.log('Memory Usage:', memoryUsage);
 }, 30000);
 
-function channelMessage(channel, data,originatingWs){
-    console.log(`Number of connected clients: ${wss.clients.size}`);
-    const message = JSON.stringify({channel, data});
-    wss.clients.forEach(client => {
-        if (client !== originatingWs && client.readyState === WebSocket.OPEN) {
+function channelMessage(endpoint, data, originatingWs) {
+    
+    console.log(`Number of connected clients on ${endpoint}: ${clientsByEndpoint[endpoint].length}`);
+    const message = JSON.stringify({ data });
+    // Broadcast only to clients on the same endpoint
+    clientsByEndpoint[endpoint].forEach(client => {
+        if (client !== originatingWs && client.readyState === 1) {
             client.send(message);
         }
     });
@@ -82,6 +94,6 @@ process.on('SIGTERM', () => {
     process.exit(0);
 });
 
-server.listen(8888, function() {
+app.listen(8888, function () {
     console.log("listening on port 8888");
 });
