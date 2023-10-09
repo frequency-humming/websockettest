@@ -13,9 +13,12 @@ const clientsByEndpoint = {
 
 app.ws('/records', (ws, req) => {
 
-    console.log('Client connected to records channel');
+    console.log('Client connected to records');
+    const origin = req.headers.origin;
+    console.log(origin);
     clientsByEndpoint['/records'].push(ws);
-    ws.send('Welcome to the records WebSocket channel!');
+    ws.send('Welcome to the records WebSocket');
+    
     ws.on('message', (message) => {
         console.log('Received message in records channel', message);
         // Broadcast the message to all connected clients on this channel
@@ -27,9 +30,11 @@ app.ws('/records', (ws, req) => {
 
 app.ws('/performance', (ws, req) => {
 
-    console.log('Client connected to performance channel');
+    console.log('Client connected to performance');
+    const origin = req.headers.origin;
+    console.log(origin);
     clientsByEndpoint['/performance'].push(ws);
-    ws.send('Welcome to the performance WebSocket channel!');
+    ws.send('Welcome to the performance WebSocket');
     ws.on('message', (message) => {
         console.log('Received message in performance channel', message);
         // Broadcast the message to all connected clients on this channel
@@ -66,10 +71,10 @@ const intervalId = setInterval(() => {
     });
     const memoryUsage = process.memoryUsage();
     console.log('Memory Usage:', memoryUsage);
-}, 30000);
+}, 45000);
 
 function channelMessage(endpoint, data, originatingWs) {
-    
+
     console.log(`Number of connected clients on ${endpoint}: ${clientsByEndpoint[endpoint].length}`);
     const message = JSON.stringify({ data });
     // Broadcast only to clients on the same endpoint
